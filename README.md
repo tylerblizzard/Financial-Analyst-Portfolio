@@ -1,4 +1,4 @@
-# IB-style 3-statement + DCF financial model portfolio built for M&A/IB recruiting
+# 3-Statement & DCF Case Study (IB Recruiting)
 
 A comprehensive, integrated 3-statement financial model built to investment banking standards with full scenario analysis, debt schedule, DCF valuation, and model validation checks.
 
