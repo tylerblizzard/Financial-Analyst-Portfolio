@@ -19,13 +19,14 @@ This Excel-based financial model provides:
 
 ```
 3_Statement_Financial_Model.xlsx - The complete financial model
-├── Summary - Executive dashboard with charts and scenario comparison
-├── Assumptions & Drivers - All model inputs and scenario toggles
+├── Summary - Executive dashboard with charts, scenario comparison, and valuation
+├── Assumptions & Drivers - All model inputs, scenario toggles, and DCF assumptions
 ├── Income Statement - P&L with segment revenue
 ├── Balance Sheet - Assets, liabilities, and equity
 ├── Debt Schedule - Term loan and revolver with average balance interest
 ├── Cash Flow - Indirect method with revolver plug
-└── Checks - Model validation and integrity checks
+├── DCF - Unlevered FCF valuation with WACC, terminal values, and sensitivity tables
+└── Checks - Model validation and integrity checks (includes DCF checks)
 ```
 
 ## Key Features
@@ -87,6 +88,47 @@ The **Summary** tab includes:
   - Revenue growth over time
   - EBITDA trend
   - Free Cash Flow
+- **DCF Valuation Summary** with perpetuity and exit multiple methods
+- Enterprise Value and Equity Value per Share
+- Key DCF assumptions display
+
+### 8. DCF Valuation
+The **DCF** tab provides comprehensive valuation analysis:
+
+**Unlevered Free Cash Flow Calculation:**
+- NOPAT (EBIT × (1-Tax))
+- Plus: Depreciation & Amortization
+- Less: Capital Expenditures
+- Less: Increase in Net Working Capital
+- = Unlevered FCF (cash available to all capital providers)
+
+**WACC (Weighted Average Cost of Capital):**
+- **Cost of Equity via CAPM:** Risk-free rate + Beta × Equity risk premium
+- **After-tax Cost of Debt:** Pre-tax rate × (1 - Tax rate)
+- **Capital Structure:** Target debt/equity weights
+- **WACC Formula:** (% Equity × Cost of Equity) + (% Debt × After-tax Cost of Debt)
+
+**Terminal Value - Two Methods:**
+1. **Perpetuity Growth Method:**
+   - Terminal FCF × (1 + g) / (WACC - g)
+   - Default: 2.5% perpetual growth rate
+
+2. **Exit Multiple Method:**
+   - Terminal year EBITDA × Exit EV/EBITDA multiple
+   - Default: 8.5x EBITDA multiple
+
+**Valuation Output:**
+- Present value of forecast period FCFs (2025-2029)
+- Present value of terminal value
+- **Enterprise Value** = PV(FCFs) + PV(Terminal Value)
+- Less: Net Debt (Total Debt - Cash)
+- **= Equity Value**
+- **Equity Value per Share** = Equity Value / Fully Diluted Shares
+
+**Sensitivity Analysis:**
+Two sensitivity table frameworks (use Excel Data Table feature):
+- **Table 1:** WACC vs Terminal Growth Rate → Equity Value per Share
+- **Table 2:** WACC vs Exit EBITDA Multiple → Equity Value per Share
 
 ## Color Coding
 
@@ -134,12 +176,48 @@ The revolver logic ensures:
 - Excess cash automatically pays down revolver
 - Draws occur when operating cash flow insufficient
 
+### Using the DCF Valuation
+The **DCF** tab calculates company valuation:
+
+**Key DCF Inputs to Adjust:**
+1. **WACC Components:**
+   - Risk-free rate (default: 4.5%)
+   - Equity risk premium (default: 6.5%)
+   - Beta (default: 1.2)
+   - Target debt % (default: 30%)
+
+2. **Terminal Value Assumptions:**
+   - Perpetual growth rate (default: 2.5%)
+   - Exit EV/EBITDA multiple (default: 8.5x)
+
+3. **Share Count:**
+   - Fully diluted shares (default: 100mm)
+
+**Reading DCF Output:**
+- **Enterprise Value (Perpetuity):** Cell C60
+- **Equity Value (Perpetuity):** Cell C63
+- **Value per Share (Perpetuity):** Cell C66
+- **Enterprise Value (Exit Multiple):** Cell C73
+- **Equity Value (Exit Multiple):** Cell C75
+- **Value per Share (Exit Multiple):** Cell C76
+
+**Creating Sensitivity Tables:**
+1. Select the sensitivity table range (e.g., B81:G86 for first table)
+2. Go to Data → What-If Analysis → Data Table
+3. For WACC vs Growth table:
+   - Row input cell: C38 (Terminal Growth Rate)
+   - Column input cell: C32 (WACC)
+4. Click OK to populate the table
+5. Repeat for Exit Multiple table (B93:I98)
+
+The DCF automatically updates when you change scenarios, as operating assumptions affect FCF generation.
+
 ## Model Logic Flow
 
 ```
-Assumptions & Drivers
+Assumptions & Drivers (Operating + DCF assumptions)
         ↓
-Income Statement (Revenue → EBITDA → Net Income)
+Income Statement (Revenue → EBITDA → EBIT → Net Income)
         ↓
 Balance Sheet (Assets = Liabilities + Equity)
         ↓
@@ -148,6 +226,14 @@ Cash Flow Statement (CFO → CFI → CFF)
 Debt Schedule (Revolver plug based on cash needs)
         ↓ (circular reference resolved)
 Back to Balance Sheet & Income Statement
+        ↓
+DCF Analysis (pulls EBIT, D&A, CapEx, NWC changes)
+        ↓
+Unlevered FCF → WACC → Terminal Value → Enterprise Value
+        ↓
+Less: Net Debt → Equity Value → Value per Share
+        ↓
+Summary Tab (integrates all outputs + valuation)
 ```
 
 ## Technical Details
@@ -172,7 +258,7 @@ This represents cash available to all capital providers before financing activit
 
 ## Generating the Model
 
-Two Python scripts are included for reproducibility:
+Three Python scripts are included for reproducibility:
 
 ### build_model.py
 Creates the initial 3-statement model from scratch.
@@ -182,10 +268,24 @@ python3 build_model.py
 ```
 
 ### enhance_model.py
-Enhances an existing model with IB-level features.
+Enhances an existing model with IB-level features (debt schedule, scenarios, checks).
 
 ```bash
 python3 enhance_model.py
+```
+
+### add_dcf_valuation.py
+Adds comprehensive DCF valuation analysis to the model.
+
+```bash
+python3 add_dcf_valuation.py
+```
+
+**To build the complete model from scratch:**
+```bash
+python3 build_model.py
+python3 enhance_model.py
+python3 add_dcf_valuation.py
 ```
 
 **Requirements:**
@@ -230,15 +330,18 @@ Before relying on model outputs:
 
 ## Extensions & Customizations
 
-This model can be extended with:
-- Additional revenue segments
+This model already includes comprehensive DCF valuation. Additional extensions could include:
+- **Trading/Transaction Comps** - Comparable company analysis tab
+- Additional revenue segments or business units
 - More granular operating expense detail
-- Multiple debt tranches with varying terms
+- Multiple debt tranches with varying terms and covenants
 - Dividend/distribution modeling
-- Detailed tax schedules (NOLs, deferred taxes)
-- Working capital by quarter for more granular forecast
-- Sensitivity tables (data tables) for key drivers
-- Valuation outputs (DCF, multiples)
+- Detailed tax schedules (NOLs, deferred taxes, deferred tax assets/liabilities)
+- Quarterly working capital forecasts for more granular modeling
+- Credit metrics analysis (leverage ratios, coverage ratios)
+- Returns analysis (IRR, MOIC for PE use cases)
+- Management case vs adjusted case reconciliation
+- Accretion/dilution analysis for M&A scenarios
 
 ## License
 
