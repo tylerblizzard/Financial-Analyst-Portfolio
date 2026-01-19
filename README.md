@@ -1,6 +1,6 @@
-# Investment Banking 3-Statement Financial Model
+# IB-style 3-statement + DCF financial model portfolio built for M&A/IB recruiting
 
-A comprehensive, integrated 3-statement financial model built to investment banking standards with full scenario analysis, proper debt schedule, and model validation checks.
+A comprehensive, integrated 3-statement financial model built to investment banking standards with full scenario analysis, debt schedule, DCF valuation, and model validation checks.
 
 ## Model Overview
 
